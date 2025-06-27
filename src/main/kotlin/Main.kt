@@ -2,10 +2,7 @@ package com.htth.sigmabot
 
 
 import com.htth.sigmabot.datasource.*
-import com.htth.sigmabot.service.cleanupVirtualAudioDevices
-import com.htth.sigmabot.service.getDefaultSink
-import com.htth.sigmabot.service.getDefaultSource
-import com.htth.sigmabot.service.processMessage
+import com.htth.sigmabot.service.*
 import io.github.cdimascio.dotenv.Dotenv
 
 
@@ -15,8 +12,8 @@ fun main() {
     val defaultSink = getDefaultSink()
     val defaultSource = getDefaultSource()
 
-    //setVirtualAiInputAudioDevices(defaultSink)
-    //setVirtualAiOutputAudioDevices(defaultSink)
+    setVirtualAiInputAudioDevices(defaultSink)
+    setVirtualAiOutputAudioDevices(defaultSink)
 
     val audioFormat = getAudioFormat()
     val speaker = audioFormat.getSourceDataLine()

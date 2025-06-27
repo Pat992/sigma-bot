@@ -103,10 +103,20 @@ fun setVirtualAiOutputAudioDevices(defaultSpeaker: String) {
         "pactl",
         "load-module",
         "module-loopback",
-        "source=virtual_ai_sink.monitor",
+        "source=virtual_ai_mic_sink.monitor",
         "sink=virtual_ai_mic_sink",
         "latency_msec=10",
         "resample-method=copy"
+    )
+
+    println("🎙️ Creating remapped source from virtual_ai_sink.monitor...")
+    runInlineCommand(
+        "pactl",
+        "load-module",
+        "module-remap-source",
+        "master=virtual_ai_sink.monitor",
+        "source_name=virtual_ai_mic",
+        "source_properties=device.description=VirtualAiMicrophone"
     )
 
     println("\uD83C\uDFA7 Available Sinks:")
