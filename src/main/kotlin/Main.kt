@@ -2,15 +2,27 @@ package com.htth.sigmabot
 
 
 import com.htth.sigmabot.datasource.*
+import com.htth.sigmabot.service.cleanupVirtualAudioDevices
+import com.htth.sigmabot.service.getDefaultSink
+import com.htth.sigmabot.service.getDefaultSource
 import com.htth.sigmabot.service.processMessage
 import io.github.cdimascio.dotenv.Dotenv
 
+
 fun main() {
     val dotenv = Dotenv.load()
+
+    val defaultSink = getDefaultSink()
+    val defaultSource = getDefaultSource()
+
+    //setVirtualAiInputAudioDevices(defaultSink)
+    //setVirtualAiOutputAudioDevices(defaultSink)
+
     val audioFormat = getAudioFormat()
     val speaker = audioFormat.getSourceDataLine()
     val mic = audioFormat.getTargetDataLine()
 
+    println("The real one: " + mic.lineInfo.toString())
     mic.open(audioFormat)
     mic.start()
 
@@ -71,6 +83,7 @@ fun main() {
     Runtime.getRuntime().addShutdownHook(Thread {
         println("Cleanup code running before shutdown...")
         ws.close(1000, "Websocket shutdown")
+        cleanupVirtualAudioDevices(defaultSink, defaultSource)
         println("Cleanup code completed.")
     })
 }
