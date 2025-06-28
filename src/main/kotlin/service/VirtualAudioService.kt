@@ -12,11 +12,6 @@ val virtualAiOutDevices: List<Pair<String, String>> = listOf(
     "vrt_ai_out_microphone" to "AI_Out_Microphone_For_Meeting"
 )
 
-
-fun listSinks(): String = runInlineCommand("pactl", "list", "short", "sinks")
-
-fun listSources(): String = runInlineCommand("pactl", "list", "short", "sources")
-
 fun getDefaultSink(): String = runInlineCommand("pactl", "get-default-sink")
 
 fun getDefaultSource(): String = runInlineCommand("pactl", "get-default-source")
@@ -105,7 +100,7 @@ fun cleanupVirtualAudioDevices(defaultSpeaker: String, defaultMicrophone: String
 
     val modules = runInlineCommand("pactl", "list", "short", "modules")
         .lines()
-        .filter { it.contains("virtual_") || it.contains("loopback") }
+        .filter { it.contains("vrt_") || it.contains("loopback") }
 
     val moduleIds = modules.mapNotNull { line ->
         line.split(Regex("\\s+")).firstOrNull()?.toIntOrNull()

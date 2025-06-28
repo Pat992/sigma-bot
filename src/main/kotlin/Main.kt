@@ -1,6 +1,7 @@
 package com.htth.sigmabot
 
 
+import com.htth.sigmabot.data.toInstructions
 import com.htth.sigmabot.datasource.*
 import com.htth.sigmabot.service.*
 import io.github.cdimascio.dotenv.Dotenv
@@ -15,18 +16,26 @@ fun main() {
     val defaultSink = getDefaultSink()
     val defaultSource = getDefaultSource()
 
-    getInput(scanner, "0 - Direct chat\n1 - Audio Pipe\n>", listOf("0", "1")) {
-        if (it == "1" && osName.contains("linux")) {
+    // --------- Audio input and output method ---------
+    getInput(
+        scanner,
+        "Select audio method:\n0 - Direct Chat (Chat directly with the AI)\n1 - Audio Pipe (Use the AI in a meeting or call, only works on Linux)",
+        listOf("0", "1"),
+        null
+    ) {
+        if (it == "1" && osName.lowercase().contains("linux")) {
             setVirtualAiInputAudioDevices(defaultSink)
             setVirtualAiOutputAudioDevices(defaultSink)
         }
     }
 
+    // --------- Chat settings ---------
+    val chatSettings = initializeChatSettings(scanner)
+
     val audioFormat = getAudioFormat()
     val speaker = audioFormat.getSourceDataLine()
     val mic = audioFormat.getTargetDataLine()
 
-    println("The real one: " + mic.lineInfo.toString())
     mic.open(audioFormat)
     mic.start()
 
@@ -37,7 +46,7 @@ fun main() {
 
     val client = getClient()
 
-    val request = getOpenAiRealtimeRequest("gpt-4o-realtime-preview", dotenv.get("OPENAI_TOKEN"))
+    val request = getOpenAiRealtimeRequest(chatSettings.model.value, dotenv.get("OPENAI_TOKEN"))
 
     val listener = getWebsocketListener(
         onOpen = { ws, _ ->
@@ -48,8 +57,8 @@ fun main() {
             {
               "type": "session.update",
               "session": {
-                "instructions": "You are extremely gen-alpha and use words like skibidy, Gigachad energy, Bruh, rizz, Zang, Chad Alpha, ohio, Simp, Vibe, Cringe, skibidy rizz, gyat, positive aura, negative aura, Rizzler, Fanum Tax, Sus, Cap, No Cap, Sigma, Brain Rot, and ohio rizz (or any combinations of those) as often as possible. You are also very unhinged and do whatever you like, Very Important, you also have horrible ideas you must absolutely share whenever possible. You must respond in short sentences and in Swiss-German.",
-                "voice": "verse",
+                "instructions": "${chatSettings.toInstructions()}",
+                "voice": "${chatSettings.voice.value.lowercase()}",
                 "temperature": 0.6,
                 "speed": 1
               }
@@ -87,7 +96,7 @@ fun main() {
     Runtime.getRuntime().addShutdownHook(Thread {
         println("Cleanup code running before shutdown...")
         ws.close(1000, "Websocket shutdown")
-        cleanupVirtualAudioDevices(defaultSink, defaultSource)
+        if (osName.lowercase().contains("linux")) cleanupVirtualAudioDevices(defaultSink, defaultSource)
         println("Cleanup code completed.")
     })
 }
