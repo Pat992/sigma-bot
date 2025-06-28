@@ -2,6 +2,17 @@ package com.htth.sigmabot.service
 
 import com.htth.sigmabot.datasource.runInlineCommand
 
+val virtualAiInDevices: List<Pair<String, String>> = listOf(
+    "vrt_ai_in_speaker" to "AI_In_Speaker_For_Meeting",
+    "vrt_ai_in_microphone" to "AI_In_Microphone"
+)
+
+val virtualAiOutDevices: List<Pair<String, String>> = listOf(
+    "vrt_ai_out_speaker" to "AI_Out_Speaker",
+    "vrt_ai_out_microphone" to "AI_Out_Microphone_For_Meeting"
+)
+
+
 fun listSinks(): String = runInlineCommand("pactl", "list", "short", "sinks")
 
 fun listSources(): String = runInlineCommand("pactl", "list", "short", "sources")
@@ -11,80 +22,66 @@ fun getDefaultSink(): String = runInlineCommand("pactl", "get-default-sink")
 fun getDefaultSource(): String = runInlineCommand("pactl", "get-default-source")
 
 fun setVirtualAiInputAudioDevices(defaultSpeaker: String) {
+    val (speakerName: String, speakerDescription: String) = virtualAiInDevices.first()
+    val (microphoneName: String, microphoneDescription: String) = virtualAiInDevices.last()
+
     println("🎛 Creating virtual speaker (null sink)...")
     runInlineCommand(
         "pactl",
         "load-module",
         "module-null-sink",
-        "sink_name=virtual_speaker",
-        "sink_properties=device.description=VirtualSpeaker",
+        "sink_name=$speakerName",
+        "sink_properties=device.description=$speakerDescription",
         "rate=48000"
     )
 
-    println("\uD83C\uDFA4 Creating virtual microphone...")
+    println("🎙️ Creating remapped source from $speakerName.monitor...")
     runInlineCommand(
         "pactl",
         "load-module",
-        "module-null-sink",
-        "sink_name=virtual_mic_sink",
-        "sink_properties=device.description=VirtualMicrophone",
-        "rate=48000"
+        "module-remap-source",
+        "master=$speakerName.monitor",
+        "source_name=$microphoneName",
+        "source_properties=device.description=$microphoneDescription"
     )
-
-    println("\uD83D\uDD27 Setting virtual microphone as default sink...")
-    runInlineCommand("pactl", "set-default-source", "virtual_mic_sink.monitor")
 
     println("🔁 Routing virtual speaker output to real sink $defaultSpeaker...")
     runInlineCommand(
         "pactl",
         "load-module",
         "module-loopback",
-        "source=virtual_speaker.monitor",
+        "source=$speakerName.monitor",
         "sink=$defaultSpeaker",
         "latency_msec=10",
         "resample-method=copy"
     )
 
-    println("🔁 Routing virtual speaker output to virtual mic sink...")
-    runInlineCommand(
-        "pactl",
-        "load-module",
-        "module-loopback",
-        "source=virtual_speaker.monitor",
-        "sink=virtual_mic_sink",
-        "latency_msec=10",
-        "resample-method=copy"
-    )
-
-    println("\uD83C\uDFA7 Available Sinks:")
-    println(listSinks())
-
-    println("\uD83C\uDF99 Available Sources:")
-    println(listSources())
+    println("\uD83D\uDD27 Setting virtual microphone as default sink...")
+    runInlineCommand("pactl", "set-default-source", "$microphoneName.monitor")
 }
 
 fun setVirtualAiOutputAudioDevices(defaultSpeaker: String) {
+    val (speakerName: String, speakerDescription: String) = virtualAiOutDevices.first()
+    val (microphoneName: String, microphoneDescription: String) = virtualAiOutDevices.last()
+
     println("🎧 Creating virtual AI speaker...")
     runInlineCommand(
         "pactl",
         "load-module",
         "module-null-sink",
-        "sink_name=virtual_ai_sink",
-        "sink_properties=device.description=VirtualAISpeaker",
+        "sink_name=$speakerName",
+        "sink_properties=device.description=$speakerDescription",
         "rate=48000"
     )
 
-    println("\uD83D\uDD27 Setting virtual speaker as default sink...")
-    runInlineCommand("pactl", "set-default-sink", "virtual_ai_sink.monitor")
-
-    println("\uD83C\uDFA4 Creating virtual microphone...")
+    println("🎙️ Creating remapped source from $speakerName.monitor...")
     runInlineCommand(
         "pactl",
         "load-module",
-        "module-null-sink",
-        "sink_name=virtual_ai_mic_sink",
-        "sink_properties=device.description=VirtualAiMicrophone",
-        "rate=48000"
+        "module-remap-source",
+        "master=$speakerName.monitor",
+        "source_name=$microphoneName",
+        "source_properties=device.description=$microphoneDescription"
     )
 
     println("🔁 Loop AI speaker to real output: $defaultSpeaker")
@@ -92,38 +89,15 @@ fun setVirtualAiOutputAudioDevices(defaultSpeaker: String) {
         "pactl",
         "load-module",
         "module-loopback",
-        "source=virtual_ai_sink.monitor",
+        "source=$speakerName.monitor",
         "sink=$defaultSpeaker",
         "latency_msec=10",
         "resample-method=copy"
     )
 
-    println("🔁 Loop AI speaker to virtual mic sink")
-    runInlineCommand(
-        "pactl",
-        "load-module",
-        "module-loopback",
-        "source=virtual_ai_mic_sink.monitor",
-        "sink=virtual_ai_mic_sink",
-        "latency_msec=10",
-        "resample-method=copy"
-    )
 
-    println("🎙️ Creating remapped source from virtual_ai_sink.monitor...")
-    runInlineCommand(
-        "pactl",
-        "load-module",
-        "module-remap-source",
-        "master=virtual_ai_sink.monitor",
-        "source_name=virtual_ai_mic",
-        "source_properties=device.description=VirtualAiMicrophone"
-    )
-
-    println("\uD83C\uDFA7 Available Sinks:")
-    println(listSinks())
-
-    println("\uD83C\uDF99 Available Sources:")
-    println(listSources())
+    println("\uD83D\uDD27 Setting virtual speaker as default sink...")
+    runInlineCommand("pactl", "set-default-sink", speakerName)
 }
 
 fun cleanupVirtualAudioDevices(defaultSpeaker: String, defaultMicrophone: String) {

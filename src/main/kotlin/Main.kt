@@ -4,16 +4,23 @@ package com.htth.sigmabot
 import com.htth.sigmabot.datasource.*
 import com.htth.sigmabot.service.*
 import io.github.cdimascio.dotenv.Dotenv
+import java.util.*
 
 
 fun main() {
     val dotenv = Dotenv.load()
+    val scanner = Scanner(System.`in`)
+    val osName = System.getProperty("os.name").lowercase()
 
     val defaultSink = getDefaultSink()
     val defaultSource = getDefaultSource()
 
-    setVirtualAiInputAudioDevices(defaultSink)
-    setVirtualAiOutputAudioDevices(defaultSink)
+    getInput(scanner, "0 - Direct chat\n1 - Audio Pipe\n>", listOf("0", "1")) {
+        if (it == "1" && osName.contains("linux")) {
+            setVirtualAiInputAudioDevices(defaultSink)
+            setVirtualAiOutputAudioDevices(defaultSink)
+        }
+    }
 
     val audioFormat = getAudioFormat()
     val speaker = audioFormat.getSourceDataLine()
