@@ -27,7 +27,7 @@ When you run the app there are some settings that can be configured.
 
 - Only works on Linux with PulseAudio
 - Change audio settings in the meeting:
-    - *AI_In_Speaker_For_Meeting* for the Output/Speaker
+    - *AI_In_Speaker_For_Meeting* for Output/Speaker
     - *AI_Out_Microphone_For_Meeting* for Input/Microphone
 
 ### Model selection
@@ -40,7 +40,7 @@ Allows you to choose the voice, will use **Verse** if you press enter or add an 
 
 ### Language selection
 
-Allows you to choose the voice, will use **english** if you press enter without any text.
+Allows you to choose the language, will use **english** if you press enter without any text.
 
 ### Character selection
 
