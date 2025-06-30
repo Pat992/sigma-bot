@@ -4,7 +4,7 @@ import com.htth.sigmabot.data.CharacterEnum
 import com.htth.sigmabot.data.ChatSettingsDto
 import com.htth.sigmabot.data.ModelEnum
 import com.htth.sigmabot.data.VoiceEnum
-import com.htth.sigmabot.datasource.getInput
+import com.htth.sigmabot.infrastructure.getInput
 import java.util.*
 
 fun initializeChatSettings(scanner: Scanner): ChatSettingsDto {

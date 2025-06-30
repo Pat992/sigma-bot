@@ -1,9 +1,39 @@
 package com.htth.sigmabot.service
 
+import com.htth.sigmabot.data.ChatSettingsDto
+import com.htth.sigmabot.data.toInstructions
+import com.htth.sigmabot.infrastructure.getRequest
 import kotlinx.serialization.json.*
+import okhttp3.Request
+import okhttp3.WebSocket
 import okio.ByteString
 import java.util.*
 import javax.sound.sampled.SourceDataLine
+
+
+fun getOpenAiRealtimeRequest(chatSettings: ChatSettingsDto, token: String): Request = getRequest(
+    url = "wss://api.openai.com/v1/realtime?model=${chatSettings.model.value}",
+    headers = listOf(
+        "OpenAI-Beta" to "realtime=v1",
+        "Authorization" to "Bearer $token"
+    )
+)
+
+fun sendInitMessage(chatSettings: ChatSettingsDto, ws: WebSocket) {
+    val config = """
+            {
+              "type": "session.update",
+              "session": {
+                "instructions": "${chatSettings.toInstructions()}",
+                "voice": "${chatSettings.voice.value.lowercase()}",
+                "temperature": 0.6,
+                "speed": 1
+              }
+            }
+        """.trimIndent()
+
+    ws.send(config)
+}
 
 fun processMessage(msg: Any, sourceDataLine: SourceDataLine): Unit = when (msg) {
     is String -> processStringMessage(msg, sourceDataLine)

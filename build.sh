@@ -20,3 +20,6 @@ jpackage \
   --type app-image \
   # --icon "$ICON" \
   --dest "$OUTPUT_DIR"
+
+# Move .env file
+cp .env "$APP_NAME/bin/.env"

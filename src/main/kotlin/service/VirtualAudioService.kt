@@ -1,6 +1,6 @@
 package com.htth.sigmabot.service
 
-import com.htth.sigmabot.datasource.runInlineCommand
+import com.htth.sigmabot.infrastructure.runInlineCommand
 
 val virtualAiInDevices: List<Pair<String, String>> = listOf(
     "vrt_ai_in_speaker" to "AI_In_Speaker_For_Meeting",

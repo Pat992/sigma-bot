@@ -1,4 +1,4 @@
-package com.htth.sigmabot.datasource
+package com.htth.sigmabot.infrastructure
 
 fun runInlineCommand(vararg command: String): String {
     val process = ProcessBuilder(*command)

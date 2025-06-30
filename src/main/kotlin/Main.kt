@@ -1,8 +1,7 @@
 package com.htth.sigmabot
 
 
-import com.htth.sigmabot.data.toInstructions
-import com.htth.sigmabot.datasource.*
+import com.htth.sigmabot.infrastructure.*
 import com.htth.sigmabot.service.*
 import io.github.cdimascio.dotenv.Dotenv
 import java.util.*
@@ -19,7 +18,7 @@ fun main() {
     // --------- Audio input and output method ---------
     getInput(
         scanner,
-        "Select audio method:\n0 - Direct Chat (Chat directly with the AI)\n1 - Audio Pipe (Use the AI in a meeting or call, only works on Linux)",
+        "Select audio method:\n0: Direct Chat - Chat directly with the AI.\n1: Meeting bot - Use the AI in a meeting or call, only works on Linux, as it uses virtual speakers and microphones.",
         listOf("0", "1"),
         null
     ) {
@@ -46,26 +45,14 @@ fun main() {
 
     val client = getClient()
 
-    val request = getOpenAiRealtimeRequest(chatSettings.model.value, dotenv.get("OPENAI_TOKEN"))
+    val request = getOpenAiRealtimeRequest(chatSettings, dotenv.get("OPENAI_TOKEN"))
 
     val listener = getWebsocketListener(
         onOpen = { ws, _ ->
             println("WebSocket opened, start streaming audio")
 
             // Send session config immediately
-            val config = """
-            {
-              "type": "session.update",
-              "session": {
-                "instructions": "${chatSettings.toInstructions()}",
-                "voice": "${chatSettings.voice.value.lowercase()}",
-                "temperature": 0.6,
-                "speed": 1
-              }
-            }
-        """.trimIndent()
-
-            ws.send(config)
+            sendInitMessage(chatSettings, ws)
 
             mic.processAudioInput(buffer) {
                 val audioMessage = """
@@ -96,6 +83,8 @@ fun main() {
     Runtime.getRuntime().addShutdownHook(Thread {
         println("Cleanup code running before shutdown...")
         ws.close(1000, "Websocket shutdown")
+        speaker.close()
+        mic.close()
         if (osName.lowercase().contains("linux")) cleanupVirtualAudioDevices(defaultSink, defaultSource)
         println("Cleanup code completed.")
     })

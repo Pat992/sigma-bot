@@ -1,4 +1,5 @@
-package com.htth.sigmabot.datasource
+package com.htth.sigmabot.infrastructure
+
 
 import okhttp3.*
 import okio.ByteString
@@ -10,11 +11,14 @@ fun getClient(readTimeoutInMs: Long = 0, pingIntervalInS: Long = 0): OkHttpClien
     .pingInterval(pingIntervalInS, TimeUnit.SECONDS)
     .build()
 
-fun getOpenAiRealtimeRequest(model: String, token: String): Request = Request
+fun getRequest(url: String, headers: List<Pair<String, String>>): Request = Request
     .Builder()
-    .url("wss://api.openai.com/v1/realtime?model=$model")
-    .addHeader("OpenAI-Beta", "realtime=v1")
-    .addHeader("Authorization", "Bearer $token")
+    .url(url)
+    .also { req ->
+        headers.forEach { header ->
+            req.addHeader(header.first, header.second)
+        }
+    }
     .build()
 
 fun getWebsocketListener(
